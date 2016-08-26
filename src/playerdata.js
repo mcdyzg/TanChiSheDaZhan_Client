@@ -1,0 +1,56 @@
+module.exports = 
+[{
+    name:'player0',
+    rotation:0,
+    score:24,
+    len:6,
+    ix:'',
+    iy:'',
+    color:'anhuang',
+    speed:120
+},{
+    name:'player1',
+    rotation:1,
+    score:24,
+    len:6,
+    ix:'',
+    iy:'',
+    color:'anhuang',
+    speed:120
+},{
+    name:'player2',
+    rotation:2,
+    score:24,
+    len:6,
+    ix:'',
+    iy:'',
+    color:'anhuang',
+    speed:120
+},{
+    name:'player3',
+    rotation:3,
+    score:24,
+    len:6,
+    ix:'',
+    iy:'',
+    color:'anhuang',
+    speed:120
+},{
+    name:'player4',
+    rotation:4,
+    score:24,
+    len:6,
+    ix:'',
+    iy:'',
+    color:'anhuang',
+    speed:120
+},{
+    name:'player5',
+    rotation:5,
+    score:24,
+    len:6,
+    ix:'',
+    iy:'',
+    color:'anhuang',
+    speed:120
+}];

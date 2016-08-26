@@ -1,0 +1,24 @@
+{
+  "name": "avtivities",
+  "version": "0.0.1",
+  "description": "",
+  "repository": "",
+  "devDependencies": {
+    "browser-sync": "~1.9.1",
+    "del": "^1.2.0",
+    "express": "^4.14.0",
+    "gulp": "~3.9.0",
+    "gulp-run": "^1.6.12",
+    "gulp-watch": "~4.1.0",
+    "gulp-webpack": "^1.5.0",
+    "jsx-loader": "^0.13.2",
+    "path": "^0.12.7",
+    "webpack": "^1.13.2",
+    "webpack-dev-middleware": "^1.6.1",
+    "webpack-hot-middleware": "^2.12.2"
+  },
+  "license": "Apache 2",
+  "scripts":{
+    "start": "node devServer.js"
+  }
+}
