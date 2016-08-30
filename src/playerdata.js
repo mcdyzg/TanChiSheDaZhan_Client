@@ -1,56 +1,62 @@
 module.exports = 
 [{
     name:'player0',
-    rotation:0,
+    rota:0,
     score:24,
     len:6,
     ix:'',
     iy:'',
     color:'anhuang',
-    speed:120
+    speed:120,
+    space:6
 },{
     name:'player1',
-    rotation:1,
+    rota:1,
     score:24,
     len:6,
     ix:'',
     iy:'',
     color:'anhuang',
-    speed:120
+    speed:120,
+    space:6
 },{
     name:'player2',
-    rotation:2,
+    rota:2,
     score:24,
     len:6,
     ix:'',
     iy:'',
     color:'anhuang',
-    speed:120
+    speed:120,
+    space:6
 },{
     name:'player3',
-    rotation:3,
+    rota:3,
     score:24,
     len:6,
     ix:'',
     iy:'',
     color:'anhuang',
-    speed:120
+    speed:120,
+    space:6
 },{
     name:'player4',
-    rotation:4,
+    rota:4,
     score:24,
     len:6,
     ix:'',
     iy:'',
     color:'anhuang',
-    speed:120
+    speed:120,
+    space:6
 },{
     name:'player5',
-    rotation:5,
+    rota:5,
     score:24,
     len:6,
     ix:'',
     iy:'',
     color:'anhuang',
-    speed:120
+    speed:120,
+    space:6
 }];

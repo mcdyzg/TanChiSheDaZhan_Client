@@ -67,14 +67,22 @@
 	    var config = {
 	        dou: 150
 	    };
+	    // 安放炸弹事件
+	    var putBoomEvent;
 	    // 初始化蛇对象
 	    var Snake = __webpack_require__(2);
-	    //game layer
+	    //糖豆组
 	    var tangdouLayer;
+	    //炸弹组
+	    var zhadanLayer;
+	    // 小蛇头部的组
+	    var snakeLayer;
+	    // 小蛇身体的组
+	    window.snakeBodyLayer ;
 	    // 小蛇实例
 	    var snake;
 	    // 玩家数据信息
-	    window.player = playerdata[0]; 
+	    var player = playerdata[0]; 
 	    // 敌人数组
 	    var enemy = new Array();
 
@@ -95,8 +103,14 @@
 	    }
 
 	    function update() {
+	        // 注册碰撞事件
 	        // game.physics.arcade.collide(snake, tangdouLayer, _chiTangDou, null, this);
-	        game.physics.arcade.overlap(snake, tangdouLayer, _chiTangDou, null, this);
+	        // 头和糖豆碰撞
+	        game.physics.arcade.overlap(snakeLayer, tangdouLayer, _chiTangDou, null, this);
+	        // 头和炸弹碰撞
+	        game.physics.arcade.overlap(snakeLayer, zhadanLayer, _over, null, this);
+	        // 头和身子碰撞
+	        game.physics.arcade.overlap(snakeLayer, snakeBodyLayer, _over2, null, this);
 	        // player.body.setZeroVelocity();
 	        // player.body.velocity.x = 90;
 	        // player.body.velocity.y = 90;
@@ -106,6 +120,7 @@
 	        if(tangdouLayer.children.length < 130) {
 	            _jiaDouDou();
 	        }       
+
 	    }
 
 	    function create() {
@@ -120,16 +135,40 @@
 
 	        // 设定背景范围
 	        game.world.setBounds(0, 0, 1000 + winW, 1000 + winH);
+	        // game.world.setBounds(halfW, halfH, 1000, 1000);
+
+	        // 添加小蛇身体的组
+	        snakeBodyLayer = game.add.group();
+	        snakeBodyLayer.enableBody = true;
+	        snakeBodyLayer.physicsBodyType = Phaser.Physics.ARCADE;
+
+	        // 添加小蛇头部的组
+	        snakeLayer = game.add.group();
+	        snakeLayer.enableBody = true;
+	        snakeLayer.physicsBodyType = Phaser.Physics.ARCADE;
 
 	        // 添加糖豆组
 	        tangdouLayer = game.add.group();
 	        tangdouLayer.enableBody = true;
 	        tangdouLayer.physicsBodyType = Phaser.Physics.ARCADE;
 
+	        // 添加炸弹组
+	        zhadanLayer = game.add.group();
+	        zhadanLayer.enableBody = true;
+	        zhadanLayer.physicsBodyType = Phaser.Physics.ARCADE;
+
+	        // 生成糖豆的边界
+	        bounds = new Phaser.Rectangle(halfW+50, halfH+50, 900, 900);
+
 	        // 生成玩家
 	        player.ix = game.world.centerX;
 	        player.iy = game.world.centerY;
+	        //此处的snake包含头部，section数组，childPath数组
 	        snake = new Snake(game, player);
+	        snakeLayer.add(snake);
+
+	        var a =new Phaser.Snake(game, game.centerX, game.centerY, 'boom')
+	        console.log(a)
 
 	        // 允许碰撞到边界
 	        snake.body.collideWorldBounds = true;
@@ -140,14 +179,13 @@
 	        // 生成随机小蛇
 	        for (var i = 1; i < playerdata.length; i++) {
 	            // playerdata[i].rotation = i;
-	            playerdata[i].ix = game.world.centerX;
-	            playerdata[i].iy = game.world.centerY;
+	            playerdata[i].ix = bounds.randomX;
+	            playerdata[i].iy = bounds.randomY;
 	            playerdata[i].color = COLORS[Math.floor(Math.random() * 10)];
 	            enemy[i] = new Snake(game, playerdata[i]);
+	            snakeLayer.add(enemy[i]);
 	            // console.log(i + '--' + player.rotation);
 	        }
-
-	        bounds = new Phaser.Rectangle(halfW+50, halfH+50, 900, 900);
 
 	        // cursors = game.input.keyboard.createCursorKeys();
 
@@ -161,35 +199,72 @@
 	    function _createStick() {
 	        // 虚拟的摇杆系统
 	        pad = game.plugins.add(Phaser.VirtualJoystick);
-	        // 初始化摇杆
+	        // 初始化控制方向的摇杆
 	        stick = pad.addStick(0, 0, 75, 'atlas');
 	        stick.scale = 0.618;
 	        stick.alignBottomLeft(30);
 	        //  Only called when the stick MOVES
 	        stick.onMove.add(_moveSnake);
 
+	        // 初始化加速按钮
 	        buttonJiaSu = pad.addButton(0, 0, 'atlas', 'jiasu', 'jiasu');
 	        buttonJiaSu.scale = 0.618;
 	        buttonJiaSu.alignBottomRight(30);
+	        // 注册按钮点击事件
 	        buttonJiaSu.onDown.add(_pressButtonJiaSu);
+	        // 注册按钮松开事件
+	        buttonJiaSu.onUp.add(_releaseButtonJiaSu);
 	    }
 
 	    function _moveSnake() {
 	        if (stick.isDown) {
-	            playerdata[0].rotation = stick.rotation 
+	            playerdata[0].rota = stick.rotation; 
 	            snake.setConfig(playerdata[0]);
-	            snake.move(stick);
+	            // snake.move(stick);
+	            snake.move();
 	        }
 	    }
 
 	    function _pressButtonJiaSu() {
-	        __event__.snake.dispatch('jiasu');
-	        // game.physics.arcade.velocityFromRotation(
-	        //     stick.rotation,
-	        //     240,
-	        //     snake.body.velocity
-	        // );
+	        if(buttonJiaSu.isDown) {
+	            // playerdata[0].speed = 200;
+	            // playerdata[0].space = 3;
+	            // snake.setConfig(playerdata[0]);
+	            // snake.move();
+	            // console.log(snake.section[6].position)
+	            
+	            //点击右侧按钮时放炸弹
+	            putBoomEvent = game.time.events.loop(Phaser.Timer.SECOND *0.3, putBoom, this);
+	        }
+	    }
 
+	    function putBoom(){
+	        var pos = snake.section[6].position;
+	        var boom = zhadanLayer.create(pos.x, pos.y, 'boom');
+	        boom.owner = player.name;
+	        boom.anchor.setTo(0.5,0.5);
+	        boom.scale.setTo(0.65);
+	        boom.body.setCircle(5);
+	    }
+
+	    function _over(a, b){
+	        if(b.owner !== a.name) {
+	            a.kill();
+	        }
+	    }
+
+	    function _over2(a, b){
+	        if(a.name != b.name) {
+	            // a.children[0].kill();
+	            b.kill();
+	            // snakeBodyLayer.children[1].destroy();
+	        }
+	    }
+
+	    function _releaseButtonJiaSu() {
+	        if(buttonJiaSu.isUp) {
+	            game.time.events.remove(putBoomEvent);
+	        }
 	    }
 
 	    function _saDouDou() {
@@ -243,58 +318,64 @@
 	module.exports = 
 	[{
 	    name:'player0',
-	    rotation:0,
+	    rota:0,
 	    score:24,
 	    len:6,
 	    ix:'',
 	    iy:'',
 	    color:'anhuang',
-	    speed:120
+	    speed:120,
+	    space:6
 	},{
 	    name:'player1',
-	    rotation:1,
+	    rota:1,
 	    score:24,
 	    len:6,
 	    ix:'',
 	    iy:'',
 	    color:'anhuang',
-	    speed:120
+	    speed:120,
+	    space:6
 	},{
 	    name:'player2',
-	    rotation:2,
+	    rota:2,
 	    score:24,
 	    len:6,
 	    ix:'',
 	    iy:'',
 	    color:'anhuang',
-	    speed:120
+	    speed:120,
+	    space:6
 	},{
 	    name:'player3',
-	    rotation:3,
+	    rota:3,
 	    score:24,
 	    len:6,
 	    ix:'',
 	    iy:'',
 	    color:'anhuang',
-	    speed:120
+	    speed:120,
+	    space:6
 	},{
 	    name:'player4',
-	    rotation:4,
+	    rota:4,
 	    score:24,
 	    len:6,
 	    ix:'',
 	    iy:'',
 	    color:'anhuang',
-	    speed:120
+	    speed:120,
+	    space:6
 	},{
 	    name:'player5',
-	    rotation:5,
+	    rota:5,
 	    score:24,
 	    len:6,
 	    ix:'',
 	    iy:'',
 	    color:'anhuang',
-	    speed:120
+	    speed:120,
+	    space:6
 	}];
 
 /***/ },
@@ -305,7 +386,6 @@
 
 	function Snake(game, conf) {
 	    var t = this;
-	    
 	    // 初始化蛇信息
 	    t.section = new Array();
 	    t.childPath = [{
@@ -314,8 +394,12 @@
 	    }];
 	    t.setConfig(conf);
 
+	    // game.add.sprite(conf.ix,conf.iy,'atlas','cheng')
+
 	    // 头部
 	    Phaser.Sprite.call(this, game, conf.ix, conf.iy, 'atlas', conf.color);
+	    // var head = this.add.sprite(conf.ix, conf.iy, 'atlas', conf.color);
+	    // head.name = t.name;
 	    t.anchor.setTo(0.5);
 	    t.scale.setTo(0.2);
 	    var eye = t.addChild(game.make.sprite(0, 0, 'atlas', 'yanjing'));
@@ -326,19 +410,20 @@
 	    //  Init snakeSection array
 	    for (var i = 1; i <= conf.len; i++) {
 	        t.section[i] = game.add.sprite(t.x, t.y, 'atlas', conf.color);
+	        t.section[i].name = t.name;
+	        snakeBodyLayer.add(t.section[i]);
 	        t.section[i].anchor.setTo(0.5, 0.5);
 	        t.section[i].scale.setTo(0.2);
 	    }
 
+	    // 生成小蛇路径
 	    for (var i = 0; i <= conf.len * t.space; i++) {
 	        t.childPath[i] = new Phaser.Point(t.x, t.y);
 	    }
 
 	    game.add.existing(t);
 
-	    t.move({
-	        rotation: conf.rotation
-	    });
+	    t.move();
 
 	    // 注册signal，用于在别的页面设置蛇的属性
 	    __event__.snake.add(t.ansy,t);
@@ -347,6 +432,10 @@
 	Snake.prototype.constructor = Snake;
 
 	Snake.prototype.addBody = function() {
+
+	}
+
+	Snake.prototype.dead = function() {
 
 	}
 
@@ -363,8 +452,9 @@
 	    t.score = conf.score;
 	    t.speed = conf.speed;
 	    t.color = conf.color;
-	    t.space = 6;
-	    t.rotation = conf.rotation;
+	    t.rota = conf.rota;
+	    // 每个蛇身体间隔6个帧数的距离
+	    t.space = conf.space;
 	}
 
 	Snake.prototype.getSectionPos = function(pos, i, rotation) {
@@ -377,13 +467,22 @@
 	    // console.log(t.childPath[i])
 	}
 
-	Snake.prototype.move = function(stick) {
+	Snake.prototype.move = function() {
 	    var t = this;
 	    var game = t.game;
-	    console.log(t.rotation)
-	    game.physics.arcade.velocityFromRotation(t.rotation, t.speed, t.body.velocity);
-	    // t.rotation = stick.rotation - Math.PI / 2;
-	    t.rotation = stick.rotation - Math.PI / 2;
+	    if(t.name === playerdata[0].name) {
+	        game.physics.arcade.velocityFromRotation(t.rota, t.speed, t.body.velocity);
+	        // t.rotation = stick.rotation - Math.PI / 2;
+	        t.rotation = t.rota - Math.PI / 2;
+	    } else {
+	        game.physics.arcade.velocityFromRotation(t.rota, t.speed, t.body.velocity);
+	        var t1 = game.time.events.loop(Phaser.Timer.SECOND , function(){
+	            t.rota = Math.PI-(2*Math.random()*Math.PI);
+	            t.rotation = t.rota - Math.PI / 2;
+	            game.physics.arcade.velocityFromRotation(t.rota, t.speed, t.body.velocity);
+	        }, this);
+	        
+	    }
 	}
 
 	// Snake.prototype.jiasu = function() {
