@@ -65,7 +65,7 @@
 	    var buttonJiaSu;
 	    //游戏设置
 	    var config = {
-	        dou: 150
+	        dou: 60
 	    };
 	    // 安放炸弹事件
 	    var putBoomEvent;
@@ -85,6 +85,14 @@
 	    var player = playerdata[0]; 
 	    // 敌人数组
 	    var enemy = new Array();
+	    // 显示分数
+	    var scoreBoard;
+	    // 墙的组
+	    var wallGroup;
+	    var leftWall;
+	    var rightWall;
+	    var topWall;
+	    var bottomWall;
 
 	    // 游戏初始化
 	    // 全屏创建
@@ -97,9 +105,10 @@
 
 	    function preload() {   
 	        game.load.image('grid', 'assets/bg.png');
-	        game.load.atlas('atlas', 'assets/tcs.png', 'assets/tcs.json');
+	        game.load.atlas('atlas', 'assets/sucai.png', 'assets/sucai.json');
 	        game.load.atlas('dou', 'assets/dou.png', 'assets/dou.json');
-	        game.load.image('boom', 'assets/boom.png');
+	        game.load.atlas('boom', 'assets/boom.png', 'assets/boom.json');
+	        game.load.image('wall', 'assets/wall.png');
 	    }
 
 	    function update() {
@@ -111,13 +120,17 @@
 	        game.physics.arcade.overlap(snakeLayer, zhadanLayer, _over, null, this);
 	        // 头和身子碰撞
 	        game.physics.arcade.overlap(snakeLayer, snakeBodyLayer, _over2, null, this);
+	        // 头和墙碰撞
+	        game.physics.arcade.overlap(snakeLayer, wallGroup, _over2, null, this);
+	        // 实时的显示炸弹数
+	        scoreBoard.text = Math.floor(playerdata[0].score/4);
 	        // player.body.setZeroVelocity();
 	        // player.body.velocity.x = 90;
 	        // player.body.velocity.y = 90;
 	        
 
 	        // 糖豆少时添加糖豆
-	        if(tangdouLayer.children.length < 130) {
+	        if(tangdouLayer.children.length < config.dou-20) {
 	            _jiaDouDou();
 	        }       
 
@@ -165,13 +178,11 @@
 	        player.iy = game.world.centerY;
 	        //此处的snake包含头部，section数组，childPath数组
 	        snake = new Snake(game, player);
+	        snake.body.setCircle(10);
 	        snakeLayer.add(snake);
 
-	        var a =new Phaser.Snake(game, game.centerX, game.centerY, 'boom')
-	        console.log(a)
-
 	        // 允许碰撞到边界
-	        snake.body.collideWorldBounds = true;
+	        // snake.body.collideWorldBounds = true;
 
 	        // 碰撞到边界反弹
 	        // snake.body.bounce.set(1);
@@ -183,6 +194,7 @@
 	            playerdata[i].iy = bounds.randomY;
 	            playerdata[i].color = COLORS[Math.floor(Math.random() * 10)];
 	            enemy[i] = new Snake(game, playerdata[i]);
+	            enemy[i].body.setCircle(10);
 	            snakeLayer.add(enemy[i]);
 	            // console.log(i + '--' + player.rotation);
 	        }
@@ -191,9 +203,57 @@
 
 	        game.camera.follow(snake);
 
+	        // 创建摇杆
 	        _createStick();
 
+	        // 撒豆
 	        _saDouDou();
+
+	        // 墙
+	        wallGroup = game.add.group();
+	        wallGroup.enableBody = true;
+	        wallGroup.physicsBodyType = Phaser.Physics.ARCADE;
+
+	        // 左边墙
+	        // leftWall = game.add.tileSprite(0, 0, halfW, 1000 + winH, 'wall');
+	        // wallGroup.add(leftWall);
+	        leftWall = wallGroup.create(0,0,'wall',1);
+	        leftWall.width =halfW;
+	        leftWall.height =1000 + winH;
+	        leftWall.name = 'wall';
+
+	        // 右边墙
+	        // rightWall = game.add.tileSprite(1000 + halfW, 0, halfW, 1000 + winH, 'wall');
+	        // wallGroup.add(rightWall);
+	        rightWall = wallGroup.create(1000 + halfW, 0,'wall',1);
+	        rightWall.width =halfW;
+	        rightWall.height =1000 + winH;
+	        rightWall.name = 'wall';
+
+	        // 上边墙
+	        // topWall = game.add.tileSprite(halfW, 0, 1000, halfH, 'wall');
+	        // wallGroup.add(topWall);
+	        topWall = wallGroup.create(halfW, 0,'wall',1);
+	        topWall.width =1000;
+	        topWall.height =halfH;
+	        topWall.name = 'wall';
+
+	        // 下边墙
+	        // bottomWall = game.add.tileSprite(halfW, 1000 + halfH, 1000, halfH, 'wall');
+	        // wallGroup.add(bottomWall);
+	        bottomWall = wallGroup.create(halfW, 1000 + halfH,'wall',1);
+	        bottomWall.width =1000;
+	        bottomWall.height =halfH;
+	        bottomWall.name = 'wall';
+
+	        // var aaa = game.add.sprite(game.world.centerX,game.world.centerY,'boom');
+	        // game.physics.enable(aaa, Phaser.Physics.ARCADE);
+	        // game.physics.arcade.velocityFromRotation(2, 140, aaa.body.velocity);
+	        
+	        // 显示剩余炸弹数
+	        scoreBoard = game.add.text(0, 0, Math.floor(player.score/4), { font: "32px Arial", fill: "#333", align: "center" });
+	        scoreBoard.fixedToCamera = true;
+	        scoreBoard.cameraOffset.setTo(game.camera.width - 86, game.camera.height - 150);
 	    }
 
 	    function _createStick() {
@@ -239,25 +299,59 @@
 	    }
 
 	    function putBoom(){
-	        var pos = snake.section[6].position;
-	        var boom = zhadanLayer.create(pos.x, pos.y, 'boom');
-	        boom.owner = player.name;
-	        boom.anchor.setTo(0.5,0.5);
-	        boom.scale.setTo(0.65);
-	        boom.body.setCircle(5);
-	    }
-
-	    function _over(a, b){
-	        if(b.owner !== a.name) {
-	            a.kill();
+	        if(player.score>=4) {
+	            var pos = snake.section[6].position;
+	            var boom = zhadanLayer.create(pos.x, pos.y, 'boom',playerdata[0].color);
+	            boom.owner = player.name;
+	            boom.anchor.setTo(0.5,0.5);
+	            boom.scale.setTo(0.65);
+	            boom.body.setCircle(10);
+	            boom.alpha=0.6;
+	            player.score -=4;
 	        }
 	    }
 
+	    // 蛇碰到炸弹
+	    function _over(a, b){
+	        if(b.owner !== a.name) {
+	            var bn = b.owner.substring(b.owner.length-1,b.owner.length);
+	            var an = a.name.substring(a.name.length-1,a.name.length);
+	            playerdata[bn].score += playerdata[an].score;
+	            var n = a.name;
+	            for(var i = 0;i<snakeBodyLayer.children.length;i++){
+	                if(snakeBodyLayer.children[i].name=== n) {
+	                    snakeBodyLayer.children[i].kill();
+	                }
+	            }
+	            for(var i = 0;i<snakeLayer.children.length;i++){
+	                if(snakeLayer.children[i].name=== n) {
+	                    snakeLayer.children[i].kill();
+	                }
+	            }
+	        }
+	    }
+
+	    // 蛇头碰到别人的身子或者碰到墙
 	    function _over2(a, b){
 	        if(a.name != b.name) {
-	            // a.children[0].kill();
-	            b.kill();
-	            // snakeBodyLayer.children[1].destroy();
+	            // 蛇头碰到蛇身子时，积分转移
+	            if(a.name.substring(0,6) === 'player' && b.name !== 'wall'){
+	                var an = a.name.substring(a.name.length-1,a.name.length);
+	                var bn = b.name.substring(b.name.length-1,b.name.length);
+	                playerdata[bn].score += playerdata[an].score;
+	            }
+	            // 清除蛇身
+	            var n = a.name;
+	            for(var i = 0;i<snakeBodyLayer.children.length;i++){
+	                if(snakeBodyLayer.children[i].name=== n) {
+	                    snakeBodyLayer.children[i].kill();
+	                }
+	            }
+	            for(var i = 0;i<snakeLayer.children.length;i++){
+	                if(snakeLayer.children[i].name=== n) {
+	                    snakeLayer.children[i].kill();
+	                }
+	            }
 	        }
 	    }
 
@@ -274,7 +368,7 @@
 	            _dou.color = color;
 	            // _dou.anchor.setTo(0.5,0.5);
 	            _dou.scale.setTo(0.65);
-	            _dou.body.setCircle(5)
+	            _dou.body.setCircle(5);
 	        }
 	    }
 
@@ -294,9 +388,9 @@
 	        // game.camera.follow();
 	        // game.physics.arcade.moveToPointer(b, 400);
 	        // b.kill();
-	        b.destroy()
-	        player.score++;
-	        
+	        var num = a.name.substring(a.name.length-1,a.name.length);
+	        b.destroy();
+	        playerdata[num].score++;
 	    }
 
 	    function _getRadomColor() {
@@ -304,6 +398,7 @@
 	    }
 
 	    function render(){
+	        // game.debug.body(snake);
 	        // console.log(snake)
 	        // game.debug.spriteInfo(_dou, 32, 32);
 	    }
@@ -382,7 +477,7 @@
 /* 2 */
 /***/ function(module, exports) {
 
-	__event__.snake = new Phaser.Signal();
+	// __event__.snake = new Phaser.Signal();
 
 	function Snake(game, conf) {
 	    var t = this;
@@ -394,14 +489,12 @@
 	    }];
 	    t.setConfig(conf);
 
-	    // game.add.sprite(conf.ix,conf.iy,'atlas','cheng')
-
 	    // 头部
 	    Phaser.Sprite.call(this, game, conf.ix, conf.iy, 'atlas', conf.color);
 	    // var head = this.add.sprite(conf.ix, conf.iy, 'atlas', conf.color);
 	    // head.name = t.name;
-	    t.anchor.setTo(0.5);
-	    t.scale.setTo(0.2);
+	    t.anchor.setTo(0.5,0.5);
+	    // t.scale.setTo(0.2);
 	    var eye = t.addChild(game.make.sprite(0, 0, 'atlas', 'yanjing'));
 	    eye.anchor.setTo(0.5);
 	    game.physics.arcade.enable(t);
@@ -413,7 +506,8 @@
 	        t.section[i].name = t.name;
 	        snakeBodyLayer.add(t.section[i]);
 	        t.section[i].anchor.setTo(0.5, 0.5);
-	        t.section[i].scale.setTo(0.2);
+	        t.section[i].body.setCircle(10);
+	        // t.section[i].scale.setTo(0.2);
 	    }
 
 	    // 生成小蛇路径
@@ -426,7 +520,7 @@
 	    t.move();
 
 	    // 注册signal，用于在别的页面设置蛇的属性
-	    __event__.snake.add(t.ansy,t);
+	    // __event__.snake.add(t.ansy,t);
 	}
 	Snake.prototype = Object.create(Phaser.Sprite.prototype);
 	Snake.prototype.constructor = Snake;
@@ -470,11 +564,13 @@
 	Snake.prototype.move = function() {
 	    var t = this;
 	    var game = t.game;
+	    // 玩家动
 	    if(t.name === playerdata[0].name) {
 	        game.physics.arcade.velocityFromRotation(t.rota, t.speed, t.body.velocity);
 	        // t.rotation = stick.rotation - Math.PI / 2;
 	        t.rotation = t.rota - Math.PI / 2;
 	    } else {
+	        // 其他玩家动
 	        game.physics.arcade.velocityFromRotation(t.rota, t.speed, t.body.velocity);
 	        var t1 = game.time.events.loop(Phaser.Timer.SECOND , function(){
 	            t.rota = Math.PI-(2*Math.random()*Math.PI);

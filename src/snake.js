@@ -1,4 +1,4 @@
-__event__.snake = new Phaser.Signal();
+// __event__.snake = new Phaser.Signal();
 
 function Snake(game, conf) {
     var t = this;
@@ -10,14 +10,12 @@ function Snake(game, conf) {
     }];
     t.setConfig(conf);
 
-    // game.add.sprite(conf.ix,conf.iy,'atlas','cheng')
-
     // 头部
     Phaser.Sprite.call(this, game, conf.ix, conf.iy, 'atlas', conf.color);
     // var head = this.add.sprite(conf.ix, conf.iy, 'atlas', conf.color);
     // head.name = t.name;
-    t.anchor.setTo(0.5);
-    t.scale.setTo(0.2);
+    t.anchor.setTo(0.5,0.5);
+    // t.scale.setTo(0.2);
     var eye = t.addChild(game.make.sprite(0, 0, 'atlas', 'yanjing'));
     eye.anchor.setTo(0.5);
     game.physics.arcade.enable(t);
@@ -29,7 +27,8 @@ function Snake(game, conf) {
         t.section[i].name = t.name;
         snakeBodyLayer.add(t.section[i]);
         t.section[i].anchor.setTo(0.5, 0.5);
-        t.section[i].scale.setTo(0.2);
+        t.section[i].body.setCircle(10);
+        // t.section[i].scale.setTo(0.2);
     }
 
     // 生成小蛇路径
@@ -42,7 +41,7 @@ function Snake(game, conf) {
     t.move();
 
     // 注册signal，用于在别的页面设置蛇的属性
-    __event__.snake.add(t.ansy,t);
+    // __event__.snake.add(t.ansy,t);
 }
 Snake.prototype = Object.create(Phaser.Sprite.prototype);
 Snake.prototype.constructor = Snake;
@@ -86,11 +85,13 @@ Snake.prototype.getSectionPos = function(pos, i, rotation) {
 Snake.prototype.move = function() {
     var t = this;
     var game = t.game;
+    // 玩家动
     if(t.name === playerdata[0].name) {
         game.physics.arcade.velocityFromRotation(t.rota, t.speed, t.body.velocity);
         // t.rotation = stick.rotation - Math.PI / 2;
         t.rotation = t.rota - Math.PI / 2;
     } else {
+        // 其他玩家动
         game.physics.arcade.velocityFromRotation(t.rota, t.speed, t.body.velocity);
         var t1 = game.time.events.loop(Phaser.Timer.SECOND , function(){
             t.rota = Math.PI-(2*Math.random()*Math.PI);
