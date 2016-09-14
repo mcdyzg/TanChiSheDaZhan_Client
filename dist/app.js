@@ -93,6 +93,10 @@
 	    var rightWall;
 	    var topWall;
 	    var bottomWall;
+	    // 结果面板
+	    var result;
+	    // 结果文字
+	    var chonglai;
 
 	    // 游戏初始化
 	    // 全屏创建
@@ -109,6 +113,7 @@
 	        game.load.atlas('dou', 'assets/dou.png', 'assets/dou.json');
 	        game.load.atlas('boom', 'assets/boom.png', 'assets/boom.json');
 	        game.load.image('wall', 'assets/wall.png');
+	        game.load.image('resultBg', 'assets/resultBg.png');
 	    }
 
 	    function update() {
@@ -254,6 +259,17 @@
 	        scoreBoard = game.add.text(0, 0, Math.floor(player.score/4), { font: "32px Arial", fill: "#333", align: "center" });
 	        scoreBoard.fixedToCamera = true;
 	        scoreBoard.cameraOffset.setTo(game.camera.width - 86, game.camera.height - 150);
+
+	        // 结果面板
+	        result = game.add.tileSprite(0, 0, 300,200,'resultBg');
+	        result.fixedToCamera = true;
+	        result.cameraOffset.setTo(game.camera.width/2 -150, game.camera.height/2 -100);
+	        result.visible = false;
+
+	        // 重新来
+	        chonglai = result.addChild(game.make.sprite(0, 0, 'atlas', 'chonglai'));
+	        chonglai.scale.setTo(0.65);
+	        chonglai.position = {x:result.centerX - chonglai.width/2,y:result.centerY -chonglai.height/2}
 	    }
 
 	    function _createStick() {
@@ -328,6 +344,9 @@
 	                    snakeLayer.children[i].kill();
 	                }
 	            }
+	            if(a.name === playerdata[0].name){
+	                gameOver();
+	            }
 	        }
 	    }
 
@@ -352,7 +371,17 @@
 	                    snakeLayer.children[i].kill();
 	                }
 	            }
+	            if(a.name === playerdata[0].name){
+	                gameOver();
+	            }
 	        }
+	    }
+
+	    function gameOver(){
+	        result.visible = true;
+	        game.input.onTap.addOnce(function(){
+	            window.location.reload();
+	        },this);
 	    }
 
 	    function _releaseButtonJiaSu() {
@@ -414,7 +443,7 @@
 	[{
 	    name:'player0',
 	    rota:0,
-	    score:24,
+	    score:240,
 	    len:6,
 	    ix:'',
 	    iy:'',
@@ -463,6 +492,36 @@
 	    space:6
 	},{
 	    name:'player5',
+	    rota:5,
+	    score:24,
+	    len:6,
+	    ix:'',
+	    iy:'',
+	    color:'anhuang',
+	    speed:120,
+	    space:6
+	},{
+	    name:'player6',
+	    rota:5,
+	    score:24,
+	    len:6,
+	    ix:'',
+	    iy:'',
+	    color:'anhuang',
+	    speed:120,
+	    space:6
+	},{
+	    name:'player7',
+	    rota:5,
+	    score:24,
+	    len:6,
+	    ix:'',
+	    iy:'',
+	    color:'anhuang',
+	    speed:120,
+	    space:6
+	},{
+	    name:'player8',
 	    rota:5,
 	    score:24,
 	    len:6,
