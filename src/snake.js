@@ -11,24 +11,29 @@ function Snake(game, conf) {
     t.setConfig(conf);
 
     // 头部
-    Phaser.Sprite.call(this, game, conf.ix, conf.iy, 'atlas', conf.color);
-    // var head = this.add.sprite(conf.ix, conf.iy, 'atlas', conf.color);
-    // head.name = t.name;
-    t.anchor.setTo(0.5,0.5);
+    // Phaser.Sprite.call(this, game, conf.ix, conf.iy, 'atlas', conf.color);
+    Phaser.Sprite.call(this, game, conf.ix, conf.iy);
+    t.anchor.setTo(0.5);
     // t.scale.setTo(0.2);
-    var eye = t.addChild(game.make.sprite(0, 0, 'atlas', 'yanjing'));
-    eye.anchor.setTo(0.5);
     game.physics.arcade.enable(t);
+    // 设置蛇头探路者的半径
+    t.body.setCircle(40);
+    t.body.offset = {x:-25,y:-25}
 
     // game.physics.arcade.enable([t.head,t.eye]);
     //  Init snakeSection array
     for (var i = 1; i <= conf.len; i++) {
         t.section[i] = game.add.sprite(t.x, t.y, 'atlas', conf.color);
+        if(i === 1) {
+            t.eye = t.section[i].addChild(game.make.sprite(0, 0, 'atlas', 'yanjing'));
+            t.eye.anchor.setTo(0.5);
+            snakeHeadLayer.add(t.section[i]);
+        } else{
+            snakeBodyLayer.add(t.section[i]);
+        }
         t.section[i].name = t.name;
-        snakeBodyLayer.add(t.section[i]);
         t.section[i].anchor.setTo(0.5, 0.5);
         t.section[i].body.setCircle(10);
-        // t.section[i].scale.setTo(0.2);
     }
 
     // 生成小蛇路径
@@ -89,25 +94,29 @@ Snake.prototype.move = function() {
     if(t.name === playerdata[0].name) {
         game.physics.arcade.velocityFromRotation(t.rota, t.speed, t.body.velocity);
         // t.rotation = stick.rotation - Math.PI / 2;
-        t.rotation = t.rota - Math.PI / 2;
+        // t.rotation = t.rota - Math.PI / 2;
+        t.eye.rotation = t.rota - Math.PI / 2;
     } else {
         // 其他玩家动
         game.physics.arcade.velocityFromRotation(t.rota, t.speed, t.body.velocity);
-        var t1 = game.time.events.loop(Phaser.Timer.SECOND , function(){
-            t.rota = Math.PI-(2*Math.random()*Math.PI);
-            t.rotation = t.rota - Math.PI / 2;
-            game.physics.arcade.velocityFromRotation(t.rota, t.speed, t.body.velocity);
-        }, this);
+        t.eye.rotation = t.rota - Math.PI / 2;
+        // var t1 = game.time.events.loop(Phaser.Timer.SECOND , function(){
+        //     t.rota = Math.PI-(2*Math.random()*Math.PI);
+        //     // t.rotation = t.rota - Math.PI / 2;
+        //     t.eye.rotation = t.rota - Math.PI / 2;
+        //     game.physics.arcade.velocityFromRotation(t.rota, t.speed, t.body.velocity);
+        // }, this);
         
     }
 }
 
-// Snake.prototype.jiasu = function() {
-//     var t = this;
-//     var game = t.game;
-//     t.speed = 200;
-//     game.physics.arcade.velocityFromRotation(t.rotation+Math.PI / 2, t.speed, t.body.velocity);
-// }
+// 蛇头探路者碰到物体时自动转向
+Snake.prototype.zhuanxiang = function() {
+    var t = this;
+    t.body.angularVelocity = 600;
+    t.rota = t.rotation;
+    t.move();
+}
 
 Snake.prototype.update = function() {
     var t = this;

@@ -33,6 +33,8 @@
     var snakeLayer;
     // 小蛇身体的组
     window.snakeBodyLayer ;
+    // 小蛇头部的组
+    window.snakeHeadLayer;
     // 小蛇实例
     var snake;
     // 玩家数据信息
@@ -74,13 +76,21 @@
         // 注册碰撞事件
         // game.physics.arcade.collide(snake, tangdouLayer, _chiTangDou, null, this);
         // 头和糖豆碰撞
-        game.physics.arcade.overlap(snakeLayer, tangdouLayer, _chiTangDou, null, this);
+        game.physics.arcade.overlap(snakeHeadLayer, tangdouLayer, _chiTangDou, null, this);
         // 头和炸弹碰撞
-        game.physics.arcade.overlap(snakeLayer, zhadanLayer, _over, null, this);
+        game.physics.arcade.overlap(snakeHeadLayer, zhadanLayer, _over, null, this);
         // 头和身子碰撞
-        game.physics.arcade.overlap(snakeLayer, snakeBodyLayer, _over2, null, this);
+        game.physics.arcade.overlap(snakeHeadLayer, snakeBodyLayer, _over2, null, this);
         // 头和墙碰撞
-        game.physics.arcade.overlap(snakeLayer, wallGroup, _over2, null, this);
+        game.physics.arcade.overlap(snakeHeadLayer, wallGroup, _over2, null, this);
+
+        // 蛇头探路者和墙碰撞
+        game.physics.arcade.overlap(snakeLayer, wallGroup, _over3, null, this);
+        // 蛇头探路者和蛇碰撞
+        game.physics.arcade.overlap(snakeLayer, snakeBodyLayer, _over3, null, this);
+        // 蛇头探路者和炸弹碰撞
+        game.physics.arcade.overlap(snakeLayer, zhadanLayer, _over3, null, this);
+
         // 实时的显示炸弹数
         scoreBoard.text = Math.floor(playerdata[0].score/4);
         // player.body.setZeroVelocity();
@@ -115,6 +125,11 @@
         snakeBodyLayer.physicsBodyType = Phaser.Physics.ARCADE;
 
         // 添加小蛇头部的组
+        snakeHeadLayer = game.add.group();
+        snakeHeadLayer.enableBody = true;
+        snakeHeadLayer.physicsBodyType = Phaser.Physics.ARCADE;
+
+        // 添加小蛇头部的组
         snakeLayer = game.add.group();
         snakeLayer.enableBody = true;
         snakeLayer.physicsBodyType = Phaser.Physics.ARCADE;
@@ -137,7 +152,8 @@
         player.iy = game.world.centerY;
         //此处的snake包含头部，section数组，childPath数组
         snake = new Snake(game, player);
-        snake.body.setCircle(10);
+        // snake.body.setCircle(30);
+        // snake.body.offset = {x:-15,y:-15}
         snakeLayer.add(snake);
 
         // 允许碰撞到边界
@@ -153,7 +169,8 @@
             playerdata[i].iy = bounds.randomY;
             playerdata[i].color = COLORS[Math.floor(Math.random() * 10)];
             enemy[i] = new Snake(game, playerdata[i]);
-            enemy[i].body.setCircle(10);
+            // enemy[i].body.setCircle(30);
+            // enemy[i].body.offset = {x:-15,y:-15}
             snakeLayer.add(enemy[i]);
             // console.log(i + '--' + player.rotation);
         }
@@ -331,6 +348,13 @@
         }
     }
 
+    // 蛇头探路者和其他精灵碰撞
+    function _over3(a, b){
+        if(a.name !== b.name) {
+            a.zhuanxiang();
+        }
+    }
+
     function gameOver(){
         result.visible = true;
         game.input.onTap.addOnce(function(){
@@ -366,6 +390,7 @@
         }
     }
 
+    // 蛇头和糖豆膨胀
     function _chiTangDou(a, b) {
         // b.body.moveTo(a) = a.body.velocity;
         // game.camera.follow();
@@ -381,7 +406,7 @@
     }
 
     function render(){
-        // game.debug.body(snake);
+        game.debug.body(snake);
         // console.log(snake)
         // game.debug.spriteInfo(_dou, 32, 32);
     }
