@@ -45,6 +45,9 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	(function(win, $) {
+	    function log(content){
+	        console.log(content)
+	    }
 	    window.__event__ = {};
 	    //获取所有蛇的数据
 	    window.playerdata = __webpack_require__(1);
@@ -102,12 +105,51 @@
 
 	    // 游戏初始化
 	    // 全屏创建
-	    var game = new Phaser.Game(winW, winH, Phaser.WEBGL, '', {
-	        preload: preload,
-	        create: create,
-	        update: update,
-	        render: render
-	    }); 
+	    // var game = new Phaser.Game(winW, winH, Phaser.WEBGL, '', {
+	    //     preload: preload,
+	    //     create: create,
+	    //     update: update,
+	    //     render: render
+	    // }); 
+	    var game = new Phaser.Game(winW, winH, Phaser.WEBGL,'game'); 
+
+	    game.States = {};
+
+	    game.States.prepare = function(){
+	        this.preload = function(){
+	            game.load.image('ready', 'assets/ready.png');
+	        };
+	        this.create = function(){
+	            game.stage.backgroundColor = '#eee';
+	            var ready = game.add.button(game.world.centerX , game.world.centerY, 'ready', this.start, this, 2, 1, 0);
+	            ready.anchor.set(0.5);
+	            // ready.events.onInputDown.add(this.start,game);
+	        };
+	        this.start = function(){
+	            game.state.start('preload');
+	        };
+	        
+	    }
+
+	    game.States.preload = function(){
+	        this.preload = function(){
+	            game.load.image('grid', 'assets/bg.png');
+	            game.load.atlas('atlas', 'assets/sucai.png', 'assets/sucai.json');
+	            game.load.atlas('dou', 'assets/dou.png', 'assets/dou.json');
+	            game.load.atlas('boom', 'assets/boom.png', 'assets/boom.json');
+	            game.load.image('wall', 'assets/wall.png');
+	            game.load.image('resultBg', 'assets/resultBg.png');
+	        };
+	        this.create = function(){
+	            game.state.start('main');
+	        }
+	    }
+
+	    game.States.main = function(){
+	        this.create = create;
+	        this.update = update;
+	        this.render = render;
+	    }
 
 	    function preload() {   
 	        game.load.image('grid', 'assets/bg.png');
@@ -230,6 +272,7 @@
 
 	        // 撒豆
 	        _saDouDou();
+	        log(tangdouLayer)
 
 	        // 墙
 	        wallGroup = game.add.group();
@@ -456,6 +499,12 @@
 	        // console.log(snake)
 	        // game.debug.spriteInfo(_dou, 32, 32);
 	    }
+
+	    game.state.add('prepare', game.States.prepare);
+	    game.state.add('preload', game.States.preload);
+	    game.state.add('main', game.States.main);
+
+	    game.state.start('prepare');
 
 	})(window, jQuery);
 

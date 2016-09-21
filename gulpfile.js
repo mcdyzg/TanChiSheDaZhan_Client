@@ -16,7 +16,8 @@ var reload = browserSync.reload;
 gulp.task('pack_local', function() {
     gulp.src('')
         .pipe(webpack(require('./webpack.local.js')))
-        .pipe(gulp.dest('./dist'))
+        // .pipe(gulp.dest('./dist'))
+        .pipe(gulp.dest('../../static/js'))
     console.info('_____pack local: done');
 });
 

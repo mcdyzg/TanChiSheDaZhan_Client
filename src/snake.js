@@ -5,14 +5,14 @@ function Snake(game, conf) {
     // 初始化蛇信息
     t.section = new Array();
     t.childPath = [{
-        x: conf.ix,
-        y: conf.iy
+        x: conf.ix + halfW,
+        y: conf.iy + halfH
     }];
     t.setConfig(conf);
 
     // 头部
     // Phaser.Sprite.call(this, game, conf.ix, conf.iy, 'atlas', conf.color);
-    Phaser.Sprite.call(this, game, conf.ix, conf.iy);
+    Phaser.Sprite.call(this, game, conf.ix + halfW, conf.iy +halfH);
     t.anchor.setTo(0.5);
     // t.scale.setTo(0.2);
     game.physics.arcade.enable(t);
@@ -91,23 +91,23 @@ Snake.prototype.move = function() {
     var t = this;
     var game = t.game;
     // 玩家动
-    if(t.name === playerdata[0].name) {
+    // if(t.name === playerdata[0].name) {
         game.physics.arcade.velocityFromRotation(t.rota, t.speed, t.body.velocity);
         // t.rotation = stick.rotation - Math.PI / 2;
         // t.rotation = t.rota - Math.PI / 2;
         t.eye.rotation = t.rota - Math.PI / 2;
-    } else {
-        // 其他玩家动
-        game.physics.arcade.velocityFromRotation(t.rota, t.speed, t.body.velocity);
-        t.eye.rotation = t.rota - Math.PI / 2;
-        // var t1 = game.time.events.loop(Phaser.Timer.SECOND , function(){
-        //     t.rota = Math.PI-(2*Math.random()*Math.PI);
-        //     // t.rotation = t.rota - Math.PI / 2;
-        //     t.eye.rotation = t.rota - Math.PI / 2;
-        //     game.physics.arcade.velocityFromRotation(t.rota, t.speed, t.body.velocity);
-        // }, this);
+    // } else {
+    //     // 其他玩家动
+    //     game.physics.arcade.velocityFromRotation(t.rota, t.speed, t.body.velocity);
+    //     t.eye.rotation = t.rota - Math.PI / 2;
+    //     // var t1 = game.time.events.loop(Phaser.Timer.SECOND , function(){
+    //     //     t.rota = Math.PI-(2*Math.random()*Math.PI);
+    //     //     // t.rotation = t.rota - Math.PI / 2;
+    //     //     t.eye.rotation = t.rota - Math.PI / 2;
+    //     //     game.physics.arcade.velocityFromRotation(t.rota, t.speed, t.body.velocity);
+    //     // }, this);
         
-    }
+    // }
 }
 
 // 蛇头探路者碰到物体时自动转向

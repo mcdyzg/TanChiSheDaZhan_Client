@@ -1,12 +1,17 @@
 (function(win, $) {
+    function log(content){
+        console.log(content)
+    }
+    window.socket = io();
     window.__event__ = {};
     //获取所有蛇的数据
-    window.playerdata = require('./playerdata');
+    // window.playerdata = require('./playerdata');
+    window.playerdata = [];
     // 屏幕尺寸
-    var winW = $(window).width();
-    var winH = $(window).height();
-    var halfW = winW / 2;
-    var halfH = winH / 2;
+    window.winW = $(window).width();
+    window.winH = $(window).height();
+    window.halfW = winW / 2;
+    window.halfH = winH / 2;
     // 蛇的颜色
     var COLORS = ['anhuang', 'cheng', 'hei', 'hong', 'huang', 'hui', 'kafei', 'lan', 'qing', 'zi'];
     // 糖豆的颜色
@@ -22,7 +27,7 @@
         dou: 60
     };
     // 安放炸弹事件
-    var putBoomEvent;
+    var putBoomEvent = {};
     // 初始化蛇对象
     var Snake = require('./snake');
     //糖豆组
@@ -38,9 +43,9 @@
     // 小蛇实例
     var snake;
     // 玩家数据信息
-    var player = playerdata[0]; 
+    var player;
     // 敌人数组
-    var enemy = new Array();
+    window.enemy = new Array();
     // 显示分数
     var scoreBoard;
     // 墙的组
@@ -49,27 +54,174 @@
     var rightWall;
     var topWall;
     var bottomWall;
-    // 结果面板
-    var result;
-    // 结果文字
-    var chonglai;
+    // 玩家昵称
+    var nicheng;
+    // 房间信息
+    var roomInfo;
+    // 昵称输入框
+    var nichengInput;
+    // 是否已经死亡
+    var isDead = false;
 
     // 游戏初始化
     // 全屏创建
-    var game = new Phaser.Game(winW, winH, Phaser.WEBGL, '', {
-        preload: preload,
-        create: create,
-        update: update,
-        render: render
-    }); 
+    // var game = new Phaser.Game(winW, winH, Phaser.WEBGL, '', {
+    //     preload: preload,
+    //     create: create,
+    //     update: update,
+    //     render: render
+    // }); 
+    var game = new Phaser.Game(winW, winH, Phaser.WEBGL,'game'); 
+
+    game.States = {};
+
+    game.States.prepare = function(){
+        this.preload = function(){
+            
+        };
+        this.create = function(){
+            game.state.start('preload');
+        };
+    }
+
+    game.States.preload = function(){
+        this.preload = function(){
+            game.load.image('logo', 'assets/logo.png');
+            game.load.image('connectBg', 'assets/bg2.png');
+            game.load.image('grid', 'assets/bg.png');
+            game.load.atlas('atlas', 'assets/sucai.png', 'assets/sucai.json');
+            game.load.atlas('dou', 'assets/dou.png', 'assets/dou.json');
+            game.load.atlas('boom', 'assets/boom.png', 'assets/boom.json');
+            game.load.image('wall', 'assets/wall.png');
+            // game.load.image('resultBg', 'assets/resultBg.png');
+            game.load.image('ready', 'assets/ready.png');
+        };
+
+        this.create = function(){
+            game.state.start('connect');
+        }
+        
+    }
+
+    game.States.connect = function(){
+
+        this.create = function(){
+
+            var t = this;
+
+            // game.onPause.add(function(){
+            //     game.paused = false;
+            //     console.log(game.paused)
+            // })
+
+            this.stage.backgroundColor = '#EEE';
+
+            // 首页背景图
+            this.bg = game.add.tileSprite(0, 0, game.width, game.height, 'connectBg');
+
+            // logo
+            this.logo = game.add.sprite(game.world.centerX, game.world.centerY-70, 'logo');
+            this.logo.anchor.setTo(0.5);
+
+            // 输入昵称的框
+            nichengInput = $('<input type="" />').css({
+                'position':'fixed',
+                'width':'172px',
+                'left': game.world.centerX - 86,
+                'top':game.world.centerY - 10
+            })
+            $('body').prepend(nichengInput)
+
+            // 点击开始游戏
+            this.ready = game.add.button(game.world.centerX , game.world.centerY + 60, 'ready', this.zhunbei, this);
+            this.ready.anchor.set(0.5);
+
+        };
+
+        this.zhunbei = function(){
+            var t = this;
+
+            if(nichengInput.val() === '') {
+                return;
+            }
+
+            // 隐藏背景
+            this.ready.visible = false;
+            this.bg.visible = false;
+            this.logo.visible = false;
+            nichengInput.hide();
+
+            var ready = game.add.text(game.world.centerX , game.world.centerY, '正在匹配玩家，请稍等', this);
+            ready.anchor.set(0.5);
+
+
+            // 加入房间
+            var d = new Date();
+            nicheng = d.getTime();
+            // nicheng = nichengInput.val().toString() + d.getTime();
+            socket.emit('join room', {
+                game: 'TanChiSheDaZhan',
+                nicheng: nicheng
+            });
+            socket.on('start game', function(data){
+                // console.log(data)
+
+                // 如果ready为true那么开始游戏，为false显示房间还有几个空位
+                if(data.ready) {
+                    roomInfo = data;
+                    // 同步游戏信息
+                    socket.on('synced info ' + roomInfo.roomKey, function(otherPlayer){
+                        if(isDead) {
+                            return;
+                        }
+                        // 让其他蛇放炸弹
+                        if(otherPlayer.toPutBoom) {
+                            // console.log(otherPlayer)
+                            var sn = otherPlayer.playerName.substring(otherPlayer.playerName.length-1, otherPlayer.playerName.length);
+                            // 放炸弹
+                            if(otherPlayer.pressBoom) {
+                                // 没有放过或者再次安放
+                                if(putBoomEvent[otherPlayer.playerName] === undefined || putBoomEvent[otherPlayer.playerName] === 'puted') {
+                                    putBoomEvent[otherPlayer.playerName] = game.time.events.loop(Phaser.Timer.SECOND *0.3, putBoom, this, playerdata[sn], enemy[sn]);
+                                }
+                                
+                            }else {
+                                game.time.events.remove(putBoomEvent[otherPlayer.playerName]);
+                                putBoomEvent[otherPlayer.playerName] = 'puted';
+                            }
+                        } else {
+                            // 移动其他的蛇
+                            _moveOtherSnake(otherPlayer);
+                        }
+                    });
+
+                    // 开始游戏
+                    playerdata = data.gameInfo;
+                    for(var i in playerdata) {
+                        if(playerdata[i].name.indexOf(nicheng) !== -1) {
+                            player = playerdata[i]; 
+                        }
+                    }
+                    t.start()
+                }else {
+                    ready.setText("再等待" + data.leftUsers + "位玩家，请稍候");
+                }
+            });
+        };
+
+        this.start = function(){
+            game.state.start('main');
+        };
+    }
+
+    game.States.main = function(){
+        this.create = create;
+        this.update = update;
+        this.render = render;
+    }
 
     function preload() {   
-        game.load.image('grid', 'assets/bg.png');
-        game.load.atlas('atlas', 'assets/sucai.png', 'assets/sucai.json');
-        game.load.atlas('dou', 'assets/dou.png', 'assets/dou.json');
-        game.load.atlas('boom', 'assets/boom.png', 'assets/boom.json');
-        game.load.image('wall', 'assets/wall.png');
-        game.load.image('resultBg', 'assets/resultBg.png');
+
     }
 
     function update() {
@@ -84,15 +236,15 @@
         // 头和墙碰撞
         game.physics.arcade.overlap(snakeHeadLayer, wallGroup, _over2, null, this);
 
-        // 蛇头探路者和墙碰撞
-        game.physics.arcade.overlap(snakeLayer, wallGroup, _over3, null, this);
-        // 蛇头探路者和蛇碰撞
-        game.physics.arcade.overlap(snakeLayer, snakeBodyLayer, _over3, null, this);
-        // 蛇头探路者和炸弹碰撞
-        game.physics.arcade.overlap(snakeLayer, zhadanLayer, _over3, null, this);
+        // 蛇头探路者和墙碰撞，实现自动转向
+        // game.physics.arcade.overlap(snakeLayer, wallGroup, _over3, null, this);
+        // 蛇头探路者和蛇碰撞，实现自动转向
+        // game.physics.arcade.overlap(snakeLayer, snakeBodyLayer, _over3, null, this);
+        // 蛇头探路者和炸弹碰撞，实现自动转向
+        // game.physics.arcade.overlap(snakeLayer, zhadanLayer, _over3, null, this);
 
         // 实时的显示炸弹数
-        scoreBoard.text = Math.floor(playerdata[0].score/4);
+        scoreBoard.text = Math.floor(player.score/4);
         // player.body.setZeroVelocity();
         // player.body.velocity.x = 90;
         // player.body.velocity.y = 90;
@@ -148,8 +300,8 @@
         bounds = new Phaser.Rectangle(halfW+50, halfH+50, 900, 900);
 
         // 生成玩家
-        player.ix = game.world.centerX;
-        player.iy = game.world.centerY;
+        // player.ix = game.world.centerX;
+        // player.iy = game.world.centerY;
         //此处的snake包含头部，section数组，childPath数组
         snake = new Snake(game, player);
         // snake.body.setCircle(30);
@@ -163,16 +315,21 @@
         // snake.body.bounce.set(1);
 
         // 生成随机小蛇
-        for (var i = 1; i < playerdata.length; i++) {
-            // playerdata[i].rotation = i;
-            playerdata[i].ix = bounds.randomX;
-            playerdata[i].iy = bounds.randomY;
-            playerdata[i].color = COLORS[Math.floor(Math.random() * 10)];
-            enemy[i] = new Snake(game, playerdata[i]);
-            // enemy[i].body.setCircle(30);
-            // enemy[i].body.offset = {x:-15,y:-15}
-            snakeLayer.add(enemy[i]);
-            // console.log(i + '--' + player.rotation);
+        for (var i = 0; i < playerdata.length; i++) {
+            // 生成其他玩家的蛇，不包括自己
+            if(playerdata[i].name.indexOf(nicheng) === -1) {
+                // playerdata[i].rotation = i;
+                // playerdata[i].ix = bounds.randomX;
+                // playerdata[i].iy = bounds.randomY;
+                // playerdata[i].color = COLORS[Math.floor(Math.random() * 10)];
+                enemy[i] = new Snake(game, playerdata[i]);
+                // enemy[i].body.setCircle(30);
+                // enemy[i].body.offset = {x:-15,y:-15}
+                snakeLayer.add(enemy[i]);
+                // console.log(i + '--' + player.rotation);
+            } else {
+                enemy[i] = {}
+            }
         }
 
         // cursors = game.input.keyboard.createCursorKeys();
@@ -231,16 +388,6 @@
         scoreBoard.fixedToCamera = true;
         scoreBoard.cameraOffset.setTo(game.camera.width - 86, game.camera.height - 150);
 
-        // 结果面板
-        result = game.add.tileSprite(0, 0, 300,200,'resultBg');
-        result.fixedToCamera = true;
-        result.cameraOffset.setTo(game.camera.width/2 -150, game.camera.height/2 -100);
-        result.visible = false;
-
-        // 重新来
-        chonglai = result.addChild(game.make.sprite(0, 0, 'atlas', 'chonglai'));
-        chonglai.scale.setTo(0.65);
-        chonglai.position = {x:result.centerX - chonglai.width/2,y:result.centerY -chonglai.height/2}
     }
 
     function _createStick() {
@@ -265,36 +412,46 @@
 
     function _moveSnake() {
         if (stick.isDown) {
-            playerdata[0].rota = stick.rotation; 
-            snake.setConfig(playerdata[0]);
+            player.rota = stick.rotation;
+            snake.setConfig(player);
             // snake.move(stick);
             snake.move();
+
+            // 向服务器同步信息
+            socket.emit('sync info ' + roomInfo.roomKey, player);
+            
         }
     }
 
     function _pressButtonJiaSu() {
         if(buttonJiaSu.isDown) {
-            // playerdata[0].speed = 200;
-            // playerdata[0].space = 3;
-            // snake.setConfig(playerdata[0]);
+            // player.speed = 200;
+            // player.space = 3;
+            // snake.setConfig(player);
             // snake.move();
             // console.log(snake.section[6].position)
             
-            //点击右侧按钮时放炸弹
-            putBoomEvent = game.time.events.loop(Phaser.Timer.SECOND *0.3, putBoom, this);
+            //点击右侧按钮时放炸弹，并向服务器同步信息
+            socket.emit('sync info ' + roomInfo.roomKey, {
+                toPutBoom:true,
+                pressBoom:true,
+                playerName:player.name
+            });
+            putBoomEvent[player.name] = game.time.events.loop(Phaser.Timer.SECOND *0.3, putBoom, this, player, snake);
         }
     }
 
-    function putBoom(){
-        if(player.score>=4) {
-            var pos = snake.section[6].position;
-            var boom = zhadanLayer.create(pos.x, pos.y, 'boom',playerdata[0].color);
-            boom.owner = player.name;
+    // 放炸弹
+    function putBoom(theMan, theSnake){
+        if(theMan.score>=4) {
+            var pos = theSnake.section[theSnake.len].position;
+            var boom = zhadanLayer.create(pos.x, pos.y, 'boom',theMan.color);
+            boom.owner = theMan.name;
             boom.anchor.setTo(0.5,0.5);
             boom.scale.setTo(0.65);
             boom.body.setCircle(10);
             boom.alpha=0.6;
-            player.score -=4;
+            theMan.score -=4;
         }
     }
 
@@ -315,7 +472,7 @@
                     snakeLayer.children[i].kill();
                 }
             }
-            if(a.name === playerdata[0].name){
+            if(a.name === player.name){
                 gameOver();
             }
         }
@@ -342,10 +499,22 @@
                     snakeLayer.children[i].kill();
                 }
             }
-            if(a.name === playerdata[0].name){
+            for(var i = 0;i<snakeHeadLayer.children.length;i++){
+                if(snakeHeadLayer.children[i].name=== n) {
+                    snakeHeadLayer.children[i].kill();
+                }
+            }
+            if(a.name === player.name){
                 gameOver();
             }
         }
+    }
+
+    // 根据socket传回的数据，改变其他蛇的走向
+    function _moveOtherSnake(otherPlayer){
+        var n = otherPlayer.name.substring(otherPlayer.name.length -1 , otherPlayer.name.length);
+        enemy[n].setConfig(otherPlayer);
+        enemy[n].move();
     }
 
     // 蛇头探路者和其他精灵碰撞
@@ -356,15 +525,24 @@
     }
 
     function gameOver(){
-        result.visible = true;
-        game.input.onTap.addOnce(function(){
-            window.location.reload();
-        },this);
+        isDead = true;
+        stick.visible = false;
+        buttonJiaSu.visible = false;
+        window.location.reload();
+        // game.state.start('replay');
     }
 
     function _releaseButtonJiaSu() {
         if(buttonJiaSu.isUp) {
-            game.time.events.remove(putBoomEvent);
+
+            //松开右侧按钮时停止放炸弹，并向服务器同步信息
+            socket.emit('sync info ' + roomInfo.roomKey, {
+                toPutBoom:true,
+                pressBoom:false,
+                playerName:player.name
+            });
+
+            game.time.events.remove(putBoomEvent[player.name]);
         }
     }
 
@@ -406,9 +584,33 @@
     }
 
     function render(){
-        game.debug.body(snake);
+        // game.debug.body(snake);
         // console.log(snake)
         // game.debug.spriteInfo(_dou, 32, 32);
     }
+
+    game.States.replay = function(){
+        this.create = function(){
+
+            // game.stage.backgroundColor = '#EEE';
+
+            // 重新来
+            var chonglai = game.add.sprite(game.world.centerX, game.world.centerY, 'atlas', 'chonglai');
+            chonglai.scale.setTo(0.65);
+            chonglai.anchor.setTo(0.5);
+
+            game.input.onTap.addOnce(function(){
+                window.location.reload();
+            },this);
+        }
+    }
+
+    game.state.add('prepare', game.States.prepare);
+    game.state.add('preload', game.States.preload);
+    game.state.add('connect', game.States.connect);
+    game.state.add('main', game.States.main);
+    // game.state.add('replay', game.States.replay);
+
+    game.state.start('prepare');
 
 })(window, jQuery);
