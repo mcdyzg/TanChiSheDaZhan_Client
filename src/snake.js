@@ -173,18 +173,18 @@ Snake.prototype.update = function() {
         // console.log(t.x)
         // console.log(t.y)
         // 向服务器同步信息
-        // socket.emit('sync info ' + roomUuid, JSON.stringify({
-        //             user:userKey,
-        //             action:'position',
-        //             data:{
-        //                 ix:t.x - halfW,
-        //                 iy:t.y - halfH
-        //             }
-        //         }));
+        socket.emit('sync info ' + roomUuid, {
+                    user:userKey,
+                    action:'position',
+                    data:{
+                        ix:t.x - halfW,
+                        iy:t.y - halfH
+                    }
+                });
 
-        socket.emit('sync info ' + roomUuid,  {
-            data:userKey + '/' + 'position' + '/' + (t.x-halfW) + '/' + (t.y-halfH)
-        });
+        // socket.emit('sync info ' + roomUuid,  {
+        //     data:userKey + '/' + 'position' + '/' + (t.x-halfW) + '/' + (t.y-halfH)
+        // });
     }else {
         // console.log(+(+(_GameInfo[this.name].ix) + halfW))
         this.game.physics.arcade.moveToXY(t, +(+(_GameInfo[this.name].ix) + halfW), +(+(_GameInfo[this.name].iy) + halfH), 120);

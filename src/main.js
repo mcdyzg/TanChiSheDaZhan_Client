@@ -186,21 +186,21 @@
                             if(_GameInfo[userKey].isDead === true) {
                                 return;
                             }else {
-                                // if(dt.action !== 'position') {
-                                //     _GameInfo[dt.user][dt.action] = dt.data;
-                                // }else {
-                                //     _GameInfo[dt.user]['ix'] = dt.data.ix;
-                                //     _GameInfo[dt.user]['iy'] = dt.data.iy;
-                                // }
-                                
-                                var temDt = dt.data.split('/');
-                                // console.log(temDt)
-                                if(temDt[1] !== 'position') {
-                                    _GameInfo[temDt[0]][temDt[1]] = temDt[2];
+                                if(dt.action !== 'position') {
+                                    _GameInfo[dt.user][dt.action] = dt.data;
                                 }else {
-                                    _GameInfo[temDt[0]]['ix'] = temDt[2];
-                                    _GameInfo[temDt[0]]['iy'] = temDt[3];
+                                    _GameInfo[dt.user]['ix'] = dt.data.ix;
+                                    _GameInfo[dt.user]['iy'] = dt.data.iy;
                                 }
+                                
+                                // var temDt = dt.data.split('/');
+                                // // console.log(temDt)
+                                // if(temDt[1] !== 'position') {
+                                //     _GameInfo[temDt[0]][temDt[1]] = temDt[2];
+                                // }else {
+                                //     _GameInfo[temDt[0]]['ix'] = temDt[2];
+                                //     _GameInfo[temDt[0]]['iy'] = temDt[3];
+                                // }
 
                                 // if(dt.action === 'rota' && _GameInfo[userKey].isDead === false) {
                                 //     enemy[dt.user].move();
@@ -439,15 +439,15 @@
         if(buttonJiaSu.isDown) {
 
             // 向服务器同步信息
-            // socket.emit('sync info ' + roomUuid, JSON.stringify({
-            //     user:userKey,
-            //     action:'putboom',
-            //     data:true
-            // }));
-
             socket.emit('sync info ' + roomUuid, {
-                data: userKey + '/' + 'putboom' + '/' + 'true'
+                user:userKey,
+                action:'putboom',
+                data:true
             });
+
+            // socket.emit('sync info ' + roomUuid, {
+            //     data: userKey + '/' + 'putboom' + '/' + 'true'
+            // });
 
             // 本地同步信息
             _GameInfo[userKey].putboom = 'true';
@@ -458,15 +458,15 @@
         if(buttonJiaSu.isUp) {
             
             // 向服务器同步信息
-            // socket.emit('sync info ' + roomUuid, JSON.stringify({
-            //     user:userKey,
-            //     action:'putboom',
-            //     data:false
-            // }));
-            
             socket.emit('sync info ' + roomUuid, {
-                data:userKey + '/' + 'putboom' + '/' + 'false'
+                user:userKey,
+                action:'putboom',
+                data:false
             });
+            
+            // socket.emit('sync info ' + roomUuid, {
+            //     data:userKey + '/' + 'putboom' + '/' + 'false'
+            // });
 
             // 同步本地信息
             _GameInfo[userKey].putboom = 'false';
