@@ -182,11 +182,26 @@
 
                         // 监听远程数据
                         socket.on('synced info ' + roomUuid, function(dt){
+
                             if(_GameInfo[userKey].isDead === true) {
                                 return;
                             }else {
-                                _GameInfo[dt.user][dt.action] = dt.data;
+                                // if(dt.action !== 'position') {
+                                //     _GameInfo[dt.user][dt.action] = dt.data;
+                                // }else {
+                                //     _GameInfo[dt.user]['ix'] = dt.data.ix;
+                                //     _GameInfo[dt.user]['iy'] = dt.data.iy;
+                                // }
                                 
+                                var temDt = dt.data.split('/');
+                                // console.log(temDt)
+                                if(temDt[1] !== 'position') {
+                                    _GameInfo[temDt[0]][temDt[1]] = temDt[2];
+                                }else {
+                                    _GameInfo[temDt[0]]['ix'] = temDt[2];
+                                    _GameInfo[temDt[0]]['iy'] = temDt[3];
+                                }
+
                                 // if(dt.action === 'rota' && _GameInfo[userKey].isDead === false) {
                                 //     enemy[dt.user].move();
                                 // }
@@ -408,14 +423,14 @@
             _GameInfo[userKey].rota = stick.rotation;
 
             // 向服务器同步信息
-            socket.emit('sync info ' + roomUuid, {
-                user:userKey,
-                action:'rota',
-                data:_GameInfo[userKey].rota
-            });
+            // socket.emit('sync info ' + roomUuid, JSON.stringify({
+            //     user:userKey,
+            //     action:'rota',
+            //     data:_GameInfo[userKey].rota
+            // }));
 
             // 小蛇移动
-            enemy[userKey].move();
+            // enemy[userKey].move();
 
         }
     }
@@ -424,14 +439,18 @@
         if(buttonJiaSu.isDown) {
 
             // 向服务器同步信息
+            // socket.emit('sync info ' + roomUuid, JSON.stringify({
+            //     user:userKey,
+            //     action:'putboom',
+            //     data:true
+            // }));
+
             socket.emit('sync info ' + roomUuid, {
-                user:userKey,
-                action:'putboom',
-                data:true
+                data: userKey + '/' + 'putboom' + '/' + 'true'
             });
 
             // 本地同步信息
-            _GameInfo[userKey].putboom = true;
+            _GameInfo[userKey].putboom = 'true';
         }
     }
 
@@ -439,14 +458,18 @@
         if(buttonJiaSu.isUp) {
             
             // 向服务器同步信息
+            // socket.emit('sync info ' + roomUuid, JSON.stringify({
+            //     user:userKey,
+            //     action:'putboom',
+            //     data:false
+            // }));
+            
             socket.emit('sync info ' + roomUuid, {
-                user:userKey,
-                action:'putboom',
-                data:false
+                data:userKey + '/' + 'putboom' + '/' + 'false'
             });
 
             // 同步本地信息
-            _GameInfo[userKey].putboom = false;
+            _GameInfo[userKey].putboom = 'false';
         }
     }
 
